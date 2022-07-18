@@ -8,10 +8,11 @@ from sklearn.preprocessing import MinMaxScaler
 
 def get_zillow_data():
     '''
-    First checks for a CSV containing the Zillow data.
-    If no CSV exists, queries the Codeup database to retrieve 
-    relevant Zillow data, returns a DataFrame of the information,
-    and then creates a CSV file to cache the data for future use.
+    First checks for a CSV containing the Zillow data for homes
+    sold during 2017. If no CSV exists, queries the Codeup database 
+    to retrieve relevant Zillow data, returns a DataFrame of the 
+    information, and then creates a CSV file to cache the data for 
+    future use.
     '''
     
     filename = "zillow.csv"
@@ -20,10 +21,14 @@ def get_zillow_data():
         return pd.read_csv(filename, index_col = 0)
     else:
         # read the SQL query into a dataframe
-        df = pd.read_sql('''SELECT bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, taxamount, fips, propertylandusedesc 
+        df = pd.read_sql('''SELECT bathroomcnt, bedroomcnt, taxvaluedollarcnt, taxamount,
+        calculatedfinishedsquarefeet, yearbuilt, fips
         FROM properties_2017 
-        JOIN propertylandusetype on properties_2017.propertylandusetypeid = propertylandusetype.propertylandusetypeid 
-        WHERE propertylandusedesc = "Single Family Residential";''', get_db_url('zillow'))
+        LEFT JOIN predictions_2017 USING (parcelid) 
+        LEFT JOIN propertylandusetype USING (propertylandusetypeid)
+        WHERE propertylandusedesc IN ('Single Family Residential',
+        'Inferred Single Family Residential') 
+        AND YEAR(transactiondate) = 2017;''', get_db_url('zillow'))
 
         # Write that dataframe to disk for later. Called "caching" the data for later.
         df.to_csv(filename)
@@ -63,7 +68,7 @@ def wrangle_zillow():
     #Drop Null Values:
     df = df.dropna()
     #Drop listings that have 0.0 bathrooms, 0.0 bedrooms, are under the 120 sqft legal minimum as required by California to be considered a residence, are over 10,000 square feet, or are priced over $2.5 million:
-    df = df.drop(df[(df.bedroomcnt == 0.0) | (df.bathroomcnt == 0.0) | (df.calculatedfinishedsquarefeet < 120.0) | (df.calculatedfinishedsquarefeet > 10000) | (df.taxvaluedollarcnt > 2500000)].index)
+    df = df.drop(df[(df.bedroomcnt == 0.0) | (df.bathroomcnt == 0.0) | (df.calculatedfinishedsquarefeet < 120.0) | (df.calculatedfinishedsquarefeet > 10000) | (df.taxvaluedollarcnt > 1600000)].index)
     #Converting 'bedroomcnt' and 'yearbuilt' columns to 'int' type:
     df = df.astype({'bedroomcnt' : int, 'yearbuilt': int})
     return df
