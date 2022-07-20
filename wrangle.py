@@ -21,8 +21,21 @@ def get_zillow_data():
         return pd.read_csv(filename, index_col = 0)
     else:
         # read the SQL query into a dataframe
-        df = pd.read_sql('''SELECT bathroomcnt, bedroomcnt, taxvaluedollarcnt, taxamount,
-        calculatedfinishedsquarefeet, yearbuilt, fips
+        df = pd.read_sql('''SELECT
+        bathroomcnt AS bathrooms,
+        bedroomcnt AS bedrooms,
+        taxvaluedollarcnt AS value,
+        taxamount AS tax_amount, 
+        calculatedfinishedsquarefeet AS square_feet, 
+        yearbuilt AS year_built,
+        fips, 
+        latitude,
+        longitude,
+        lotsizesquarefeet AS lot_size,
+        regionidzip AS zip_code, 
+        structuretaxvaluedollarcnt AS structure_value,
+        landtaxvaluedollarcnt AS land_value,
+        transactiondate AS sale_date
         FROM properties_2017 
         LEFT JOIN predictions_2017 USING (parcelid) 
         LEFT JOIN propertylandusetype USING (propertylandusetypeid)
@@ -54,6 +67,11 @@ def clearing_fips(df):
     df = df.drop(columns = 'fips')
     return df
 
+def add_zillow_features(df):
+    #Adding column that displays ration of bedrooms to bathrooms:
+    df['bath_bed_ratio'] = df.bathrooms / df.bedrooms
+    return df
+
 def wrangle_zillow():
     '''Function to import zillow data from database and create a CSV cache of the file. 
     Function runs the clearing_fips function to generate counties and drop fips column, 
@@ -67,10 +85,15 @@ def wrangle_zillow():
     df = clearing_fips(df)
     #Drop Null Values:
     df = df.dropna()
+    #Add bedroom-to-bathroom ratio column:
+    df = add_zillow_features(df)
     #Drop listings that have 0.0 bathrooms, 0.0 bedrooms, are under the 120 sqft legal minimum as required by California to be considered a residence, are over 10,000 square feet, or are priced over $2.5 million:
-    df = df.drop(df[(df.bedroomcnt == 0.0) | (df.bathroomcnt == 0.0) | (df.calculatedfinishedsquarefeet < 120.0) | (df.calculatedfinishedsquarefeet > 10000) | (df.taxvaluedollarcnt > 1600000)].index)
-    #Converting 'bedroomcnt' and 'yearbuilt' columns to 'int' type:
-    df = df.astype({'bedroomcnt' : int, 'yearbuilt': int})
+    df = df.drop(df[(df.bedrooms == 0.0) | (df.bathrooms == 0.0) | (df.square_feet < 120.0) | (df.square_feet > 10000) | (df.value > 1600000)].index)
+    #Fixing the format of the latitude and longitude values:
+    df['latitude'] = df.latitude * (10 ** -6)
+    df['longitude'] = df.longitude * (10 ** -6)
+    #Converting 'bedrooms' and 'year_built' columns to 'int' type:
+    df = df.astype({'bedrooms' : int, 'year_built': int})
     return df
 
 def split_zillow_data(df):
@@ -93,7 +116,7 @@ def scale_zillow_data(train, validate, test):
     '''
     
     #Defining the columns that need to be scaled:
-    scaled_columns = ['bedroomcnt', 'bathroomcnt', 'calculatedfinishedsquarefeet', 'taxvaluedollarcnt']
+    scaled_columns = ['bedrooms', 'bathrooms', 'square_feet', 'value', 'tax_amount', 'lot_size', 'structure_value', 'land_value']
     
     #Creating scalable copies of the train, validate, and test sets:
     train_scaled = train.copy()
