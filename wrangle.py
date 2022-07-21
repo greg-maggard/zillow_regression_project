@@ -25,17 +25,15 @@ def get_zillow_data():
         bathroomcnt AS bathrooms,
         bedroomcnt AS bedrooms,
         taxvaluedollarcnt AS value,
-        taxamount AS tax_amount, 
         calculatedfinishedsquarefeet AS square_feet, 
         yearbuilt AS year_built,
         fips, 
         latitude,
         longitude,
-        lotsizesquarefeet AS lot_size,
-        regionidzip AS zip_code, 
+        lotsizesquarefeet AS lot_size, 
         structuretaxvaluedollarcnt AS structure_value,
         landtaxvaluedollarcnt AS land_value,
-        transactiondate AS sale_date
+        taxamount as tax_amount
         FROM properties_2017 
         LEFT JOIN predictions_2017 USING (parcelid) 
         LEFT JOIN propertylandusetype USING (propertylandusetypeid)
