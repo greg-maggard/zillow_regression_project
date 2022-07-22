@@ -110,11 +110,12 @@ def scale_zillow_data(train, validate, test):
     '''
     Takes in train, validate, and test sets, creates copies of those sets, and
     scales the copies. Returns train_scaled, validate_scaled, and test_scaled 
-    DataFrames.
+    DataFrames in which the county values are one-hot encoded and the numerical 
+    values are scaled.
     '''
     
     #Defining the columns that need to be scaled:
-    scaled_columns = ['bedrooms', 'bathrooms', 'square_feet', 'value', 'tax_amount', 'lot_size', 'structure_value', 'land_value']
+    scaled_columns = ['bedrooms', 'bathrooms', 'value', 'square_feet', 'bath_bed_ratio', 'lot_size', 'structure_value', 'land_value']
     
     #Creating scalable copies of the train, validate, and test sets:
     train_scaled = train.copy()
@@ -132,4 +133,19 @@ def scale_zillow_data(train, validate, test):
 
     #Returning scaled dataframes:
     return train_scaled, validate_scaled, test_scaled
+
+def encode_zillow_data(df, column_names = ['county']):
+    '''
+    Takes in the Zillow DataFrame and returns a version
+    in which the county values are one-hot encoded for modeling.
+    '''
+    #Making the dummy columns for the encoded variable:
+    dummy_df = pd.get_dummies(df[column_names], drop_first = True)
+
+    #Concatenating dummy columns onto original dataframe:
+    df = pd.concat([df, dummy_df], axis=1).drop(columns = column_names)
+    
+    #Returning DataFrame With Encoded Values:
+    return df
+    
 
