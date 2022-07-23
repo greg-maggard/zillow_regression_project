@@ -83,7 +83,7 @@ def wrangle_zillow():
     #Add bedroom-to-bathroom ratio column:
     df = add_zillow_features(df)
     #Drop listings that have 0.0 bathrooms, 0.0 bedrooms, are under the 120 sqft legal minimum as required by California to be considered a residence, are over 10,000 square feet, or are priced over $2.5 million:
-    df = df.drop(df[(df.bedrooms == 0.0) | (df.bathrooms == 0.0) | (df.square_feet < 120.0) | (df.square_feet > 10000) | (df.value > 1600000)].index)
+    df = df.drop(df[(df.bedrooms == 0.0) | (df.bathrooms == 0.0) | (df.square_feet < 120.0) | (df.square_feet > 10000) | (df.value > 1600000) | (df.lot_size > 100000)].index)
     #Fixing the format of the latitude and longitude values:
     df['latitude'] = df.latitude * (10 ** -6)
     df['longitude'] = df.longitude * (10 ** -6)
@@ -112,7 +112,7 @@ def scale_zillow_data(train, validate, test):
     '''
     
     #Defining the columns that need to be scaled:
-    scaled_columns = ['bedrooms', 'bathrooms', 'square_feet', 'bath_bed_ratio', 'lot_size']
+    scaled_columns = ['bedrooms', 'bathrooms', 'square_feet', 'bath_bed_ratio', 'lot_size', 'year_built']
     
     #Creating scalable copies of the train, validate, and test sets:
     train_scaled = train.copy()
