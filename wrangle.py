@@ -30,10 +30,7 @@ def get_zillow_data():
         fips, 
         latitude,
         longitude,
-        lotsizesquarefeet AS lot_size, 
-        structuretaxvaluedollarcnt AS structure_value,
-        landtaxvaluedollarcnt AS land_value,
-        taxamount as tax_amount
+        lotsizesquarefeet AS lot_size
         FROM properties_2017 
         LEFT JOIN predictions_2017 USING (parcelid) 
         LEFT JOIN propertylandusetype USING (propertylandusetypeid)
@@ -115,7 +112,7 @@ def scale_zillow_data(train, validate, test):
     '''
     
     #Defining the columns that need to be scaled:
-    scaled_columns = ['bedrooms', 'bathrooms', 'value', 'square_feet', 'bath_bed_ratio', 'lot_size', 'structure_value', 'land_value']
+    scaled_columns = ['bedrooms', 'bathrooms', 'square_feet', 'bath_bed_ratio', 'lot_size']
     
     #Creating scalable copies of the train, validate, and test sets:
     train_scaled = train.copy()
